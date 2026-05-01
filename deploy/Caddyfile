@@ -1,0 +1,9 @@
+asgoncharov.com {
+  redir /daily /daily/
+
+  handle_path /daily/* {
+    root * /var/www/daily
+    try_files {path} /index.html
+    file_server
+  }
+}
