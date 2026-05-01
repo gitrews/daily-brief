@@ -486,7 +486,7 @@ function OverviewPage() {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={\}
+            className={activeCategory === cat ? 'border border-signal-500/60 bg-signal-500/10 text-signal-500 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em]' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em]'}
           >
             {cat}
           </button>
