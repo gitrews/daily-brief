@@ -13,6 +13,7 @@ import {
   Moon,
   Newspaper,
   RadioTower,
+  Share2,
   ShieldAlert,
   Sun,
   TrendingUp,
@@ -285,9 +286,28 @@ function BriefPage() {
               </span>
               <RiskBadge level={brief.riskLevel} />
             </div>
-            <h2 className="mt-3 text-2xl font-semibold text-white sm:text-4xl">
-              {brief.title}
-            </h2>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-semibold text-white sm:text-4xl">
+                {brief.title}
+              </h2>
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: brief.title,
+                      text: brief.executiveSummary,
+                      url: window.location.href,
+                    });
+                  } else {
+                    navigator.clipboard.writeText(window.location.href);
+                  }
+                }}
+                className="inline-flex h-10 items-center gap-2 border border-white/12 bg-white/5 px-3 text-sm font-medium text-slate-200 transition hover:border-signal-500/60 hover:text-white"
+              >
+                <Share2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Поделиться</span>
+              </button>
+            </div>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300">
               {brief.executiveSummary}
             </p>
@@ -542,7 +562,7 @@ function OverviewPage() {
         ))}
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((item) => (
           <a
             key={item.id}
