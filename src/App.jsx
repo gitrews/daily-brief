@@ -12,10 +12,11 @@ import {
   Globe2,
   RadioTower,
   ShieldAlert,
+  TrendingUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { chartUrl, fetchBrief, fetchIndex, formatDate } from './lib/data.js';
+import { chartUrl, chartUrlPeriod, fetchBrief, fetchIndex, formatDate } from './lib/data.js';
 
 function AppShell({ children }) {
   return (
@@ -168,8 +169,13 @@ function LatestRedirect() {
   return <Navigate to={`/${data.latest}`} replace />;
 }
 
+function HomeRedirect() {
+  return <Navigate to="/latest" replace />;
+}
+
 function BriefPage() {
   const { date } = useParams();
+  const [chartPeriod, setChartPeriod] = useState('week');
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
 
   useEffect(() => {
@@ -193,6 +199,13 @@ function BriefPage() {
   if (state.status === 'error') return <ErrorState message={state.error.message} />;
 
   const brief = state.data;
+  const marketIndices = brief.marketIndices || [];
+
+  const periods = [
+    { key: 'week', label: 'Неделя' },
+    { key: 'month', label: 'Месяц' },
+    { key: 'year', label: 'Год' },
+  ];
 
   return (
     <article className="space-y-6">
@@ -289,10 +302,51 @@ function BriefPage() {
             </div>
           </Panel>
 
+          {marketIndices.length > 0 && (
+            <Panel title="Индексы рынков" icon={TrendingUp}>
+              <div className="space-y-3">
+                {marketIndices.map((idx) => (
+                  <div key={idx.ticker} className="border border-white/10 bg-coal-950/50 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-white">{idx.name}</span>
+                      <span className="text-sm font-semibold text-white">{idx.value} {idx.currency}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-xs">
+                      <span className={idx.changeDay >= 0 ? 'text-signal-500' : 'text-red-400'}>
+                        день: {idx.changeDay >= 0 ? '+' : ''}{idx.changeDay}%
+                      </span>
+                      <span className={idx.changeWeek >= 0 ? 'text-signal-500' : 'text-red-400'}>
+                        нед: {idx.changeWeek >= 0 ? '+' : ''}{idx.changeWeek}%
+                      </span>
+                      <span className={idx.changeMonth >= 0 ? 'text-signal-500' : 'text-red-400'}>
+                        мес: {idx.changeMonth >= 0 ? '+' : ''}{idx.changeMonth}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
           <Panel title="График риска" icon={BarChart3}>
+            <div className="mb-3 flex gap-1">
+              {periods.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => setChartPeriod(p.key)}
+                  className={`flex-1 border px-2 py-1.5 text-xs font-medium uppercase tracking-[0.1em] transition ${
+                    chartPeriod === p.key
+                      ? 'border-signal-500/60 bg-signal-500/10 text-signal-500'
+                      : 'border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <img
-              src={chartUrl(brief.date)}
-              alt={`График риска за ${formatDate(brief.date)}`}
+              src={chartUrlPeriod(brief.date, chartPeriod)}
+              alt={`График риска — ${periods.find((p) => p.key === chartPeriod)?.label} за ${formatDate(brief.date)}`}
               className="w-full border border-white/10 bg-coal-950"
             />
           </Panel>
@@ -393,7 +447,7 @@ export default function App() {
   return (
     <AppShell>
       <Routes>
-        <Route path="/" element={<ArchivePage />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/latest" element={<LatestRedirect />} />
         <Route path="/:date" element={<BriefPage />} />
         <Route path="*" element={<NotFound />} />

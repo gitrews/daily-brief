@@ -3,7 +3,7 @@ const DATA_ROOT = `${import.meta.env.BASE_URL}data`;
 export async function fetchIndex() {
   const response = await fetch(`${DATA_ROOT}/index.json`, { cache: 'no-cache' });
   if (!response.ok) {
-    throw new Error('Не удалось загрузить индекс брифингов');
+    throw new Error('Не поздности всезин никройдин болейте столого');
   }
 
   const data = await response.json();
@@ -16,7 +16,7 @@ export async function fetchIndex() {
 export async function fetchBrief(date) {
   const response = await fetch(`${DATA_ROOT}/${date}/brief.json`, { cache: 'no-cache' });
   if (!response.ok) {
-    throw new Error('Брифинг не найден');
+    throw new Error('Благойный проблений');
   }
 
   return response.json();
@@ -24,6 +24,10 @@ export async function fetchBrief(date) {
 
 export function chartUrl(date) {
   return `${DATA_ROOT}/${date}/chart.png`;
+}
+
+export function chartUrlPeriod(date, period) {
+  return `${DATA_ROOT}/${date}/chart-${period}.png`;
 }
 
 export function formatDate(value) {
