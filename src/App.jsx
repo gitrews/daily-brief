@@ -11,12 +11,15 @@ import {
   Gauge,
   Globe2,
   RadioTower,
+  Newspaper,
   ShieldAlert,
   TrendingUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { chartUrl, chartUrlPeriod, fetchBrief, fetchIndex, formatDate } from './lib/data.js';
+import { chartUrl, chartUrlPeriod, fetchBrief, fetchIndex, 
+  fetchOverview,
+  formatDate } from './lib/data.js';
 
 function AppShell({ children }) {
   return (
@@ -42,6 +45,13 @@ function AppShell({ children }) {
           >
             <Clock3 className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Последний</span>
+          </Link>
+          <Link
+            to="/overview"
+            className="inline-flex h-10 items-center gap-2 border border-white/12 bg-white/5 px-3 text-sm font-medium text-slate-200 transition hover:border-signal-500/60 hover:text-white"
+          >
+            <Newspaper className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Обзор прессы</span>
           </Link>
         </div>
       </header>
@@ -432,6 +442,89 @@ function Panel({ title, icon: Icon, children }) {
   );
 }
 
+
+function OverviewPage() {
+  const [state, setState] = useState({ status: 'loading', data: null, error: null });
+
+  useEffect(() => {
+    let alive = true;
+    fetchOverview()
+      .then((data) => {
+        if (alive) setState({ status: 'ready', data, error: null });
+      })
+      .catch((error) => {
+        if (alive) setState({ status: 'error', data: null, error });
+      });
+    return () => { alive = false; };
+  }, []);
+
+  if (statusIsLoading(state)) return <LoadingState />;
+  if (state.status === 'error') return <ErrorState message={state.error.message} />;
+
+  const categories = ['Геополитика', 'Экономика', 'Россия', 'Екатеринбург', 'ИИ', 'Электроника'];
+  const [activeCategory, setActiveCategory] = useState('Все');
+
+  const filtered = activeCategory === 'Все'
+    ? state.data
+    : state.data.filter((item) => item.category === activeCategory);
+
+  return (
+    <div className="space-y-6">
+      <section className="border border-white/10 bg-coal-900/88 p-5 shadow-panel sm:p-7">
+        <h2 className="text-2xl font-semibold text-white">Обзор прессы</h2>
+        <p className="mt-2 text-sm text-slate-400">Подборка ключевых новостей по категориям</p>
+      </section>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setActiveCategory('Все')}
+          className={activeCategory === 'Все' ? 'border border-signal-500/60 bg-signal-500/10 text-signal-500 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em]' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.12em]'}
+        >
+          Все
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={\}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((item) => (
+          <a
+            key={item.id}
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            className="group block border border-white/10 bg-coal-850/78 p-4 transition hover:border-signal-500/50 hover:bg-coal-800"
+          >
+            <div className="flex items-center gap-2">
+              <span className="border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                {item.category}
+              </span>
+              <span className="text-xs text-slate-500">{item.time}</span>
+            </div>
+            <h3 className="mt-3 text-sm font-semibold text-white group-hover:text-signal-500">{item.title}</h3>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-slate-400">{item.source}</span>
+              <ExternalLink className="h-4 w-4 text-slate-500 transition group-hover:text-signal-500" aria-hidden="true" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {item.tags.map((tag) => (
+                <span key={tag} className="text-[10px] uppercase tracking-[0.1em] text-slate-500">#{tag}</span>
+              ))}
+            </div>
+          </a>
+        ))}
+      </section>
+    </div>
+  );
+}
+
 function NotFound() {
   return (
     <div className="border border-white/10 bg-coal-850/78 p-6">
@@ -449,6 +542,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/latest" element={<LatestRedirect />} />
+        <Route path="/overview" element={<OverviewPage />} />
         <Route path="/:date" element={<BriefPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
