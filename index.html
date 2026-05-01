@@ -10,6 +10,14 @@
     <title>Daily Intelligence Brief</title>
     <link rel="manifest" href="/daily/manifest.json" />
     <meta name="theme-color" content="#0d1217" />
+    <script>
+      (function() {
+        var savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
     <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/daily/sw.js");}</script>
   </head>
   <body>

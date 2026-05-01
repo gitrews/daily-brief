@@ -10,9 +10,11 @@ import {
   FileText,
   Gauge,
   Globe2,
-  RadioTower,
+  Moon,
   Newspaper,
+  RadioTower,
   ShieldAlert,
+  Sun,
   TrendingUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,6 +48,17 @@ function AppShell({ children }) {
             <Clock3 className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Последний</span>
           </Link>
+          <button
+            onClick={() => {
+              const isLight = document.documentElement.classList.toggle('light');
+              localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            }}
+            className="inline-flex h-10 items-center gap-2 border border-white/12 bg-white/5 px-3 text-sm font-medium text-slate-200 transition hover:border-signal-500/60 hover:text-white"
+            aria-label="Переключить тему"
+          >
+            <Sun className="h-4 w-4 hidden [.light_&]:block" />
+            <Moon className="h-4 w-4 [.light_&]:hidden" />
+          </button>
           <Link
             to="/overview"
             className="inline-flex h-10 items-center gap-2 border border-white/12 bg-white/5 px-3 text-sm font-medium text-slate-200 transition hover:border-signal-500/60 hover:text-white"
@@ -111,14 +124,50 @@ function useIndex() {
 
 function ArchivePage() {
   const { status, data, error } = useIndex();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [riskFilter, setRiskFilter] = useState('');
 
   if (status === 'loading') return <LoadingState />;
   if (status === 'error') return <ErrorState message={error.message} />;
+
+  const filteredBriefings = data.briefings.filter((brief) => {
+    const matchesSearch = !searchQuery || 
+      brief.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brief.summary.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRisk = !riskFilter || brief.riskLevel === riskFilter;
+    return matchesSearch && matchesRisk;
+  });
 
   const totalRegions = new Set(data.briefings.flatMap((brief) => brief.regions)).size;
 
   return (
     <div className="space-y-6">
+      <section className="border border-white/10 bg-coal-900/86 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            placeholder="Поиск по брифингам..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 border border-white/10 bg-coal-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-signal-500 focus:outline-none"
+          />
+          <select
+            value={riskFilter}
+            onChange={(e) => setRiskFilter(e.target.value)}
+            className="border border-white/10 bg-coal-950 px-3 py-2 text-sm text-white"
+          >
+            <option value="">Все уровни риска</option>
+            <option value="high">Высокий</option>
+            <option value="elevated">Повышенный</option>
+            <option value="moderate">Умеренный</option>
+            <option value="low">Низкий</option>
+          </select>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Найдено: {filteredBriefings.length} из {data.briefings.length}
+        </p>
+      </section>
+
       <section className="grid gap-4 border border-white/10 bg-coal-900/86 p-5 shadow-panel sm:grid-cols-3 sm:p-6">
         <Metric icon={FileText} label="Брифингов" value={data.briefings.length} />
         <Metric icon={Globe2} label="Регионов" value={totalRegions} />
@@ -126,7 +175,7 @@ function ArchivePage() {
       </section>
 
       <section className="space-y-3">
-        {data.briefings.map((brief) => (
+        {filteredBriefings.map((brief) => (
           <Link
             key={brief.date}
             to={`/${brief.date}`}
@@ -537,6 +586,13 @@ function NotFound() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light');
+    }
+  }, []);
+
   return (
     <AppShell>
       <Routes>

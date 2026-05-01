@@ -34,3 +34,11 @@ a {
   color: #080b0e;
   background: #3dd6a3;
 }
+
+.light {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+.light .min-h-screen {
+  background-color: #f1f5f9;
+}
