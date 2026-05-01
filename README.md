@@ -1,60 +1,67 @@
-# Daily Intelligence Brief
+# Daily Intel
 
-React + Vite + Tailwind CSS SPA for daily intelligence briefings.
+Ежедневный разведывательный брифинг — мобильно-оптимизированный веб-приложение для быстрого погружения в геополитику, экономику и рынки.
 
-## Stack
+**Живой демо:** https://asgoncharov.com/daily
 
-- React 18
-- Vite
+## Что делает
+
+- 📊 **Графики** — USD/RUB, EUR/RUB, Brent, ставка ЦБ РФ (неделя / месяц / год)
+- 📈 **Индексы рынков** — МосБиржа (IMOEX), S&P 500
+- 📰 **Обзор прессы** — 6 рубрик: Геополитика, Экономика, Россия, Екатеринбург, ИИ, Электроника
+- 🔍 **Поиск и фильтры** — по тексту и уровню риска в архиве
+- 🌓 **Тёмная/светлая тема** — с памятью выбора
+- 📱 **PWA** — установка на домашний экран, офлайн-кэширование
+- 🔗 **Поделиться** — Web Share API
+
+## Технологии
+
+- React 18 + Vite
 - Tailwind CSS
-- React Router with `HashRouter`
-- Static JSON data from `public/data`
+- React Router (HashRouter)
+- Matplotlib (графики на сервере)
+- Caddy (статический хостинг)
 
-## Routes
+## Структура данных
 
-- `/#/` - archive of all briefings
-- `/#/latest` - redirect to the latest briefing
-- `/#/YYYY-MM-DD` - full briefing
-
-Production base path is `/daily/`, so deployed URLs look like:
-
-- `https://asgoncharov.com/daily/#/`
-- `https://asgoncharov.com/daily/#/latest`
-- `https://asgoncharov.com/daily/#/2026-05-02`
-
-## Data Layout
-
-```text
-public/data/
-  index.json
-  YYYY-MM-DD/
-    brief.json
-    chart.png
+```
+data/
+├── index.json          # индекс всех брифингов
+├── overview.json       # обзор прессы
+└── YYYY-MM-DD/
+    ├── brief.json      # полный брифинг
+    ├── chart-week.png  # график за 7 дней
+    ├── chart-month.png # график за 30 дней
+    └── chart-year.png  # график за 12 месяцев
 ```
 
-`index.json` defines the latest date and archive metadata. Each `brief.json` contains the full page content for one briefing.
+## Автоматизация
 
-## Development
+Ежедневно в 9:07 EKB автоматически генерируется:
+- PDF брифинг
+- JSON-данные + графики
+- Обновление индекса
+
+## Локальная разработка
 
 ```bash
+git clone https://github.com/gitrews/daily-brief.git
+cd daily-brief
 npm install
 npm run dev
 ```
 
-## Build
+## Сборка
 
 ```bash
 npm run build
+# dist/ → копируется в /var/www/daily/
 ```
 
-The static build is written to `dist/`.
+## Автор
 
-## Deploy
+Андрей Гончаров — продуктовый менеджер, предприниматель, лектор.
 
-```bash
-npm run deploy
-```
+---
 
-This builds the app and copies `dist/` into `/var/www/daily/`.
-
-Use `deploy/Caddyfile` as the Caddy site configuration. It serves `/daily/*` from `/var/www/daily/` and falls back to `index.html` for the SPA.
+*Проект создан для конкурса проектов. Собран за одну ночь.*
