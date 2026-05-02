@@ -36,9 +36,73 @@ a {
 }
 
 .light {
-  background-color: #f1f5f9;
-  color: #1e293b;
+  --bg-primary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-input: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #cbd5e1;
+  --signal-color: #059669;
+  --signal-bg: rgba(5, 150, 105, 0.1);
 }
+
+.light html {
+  background: var(--bg-primary);
+}
+
+.light body,
 .light .min-h-screen {
-  background-color: #f1f5f9;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.light .border-white\/10,
+.light .border-white\/12 {
+  border-color: var(--border-color) !important;
+}
+
+.light .bg-coal-900\/86,
+.light .bg-coal-950,
+.light .bg-white\/5,
+.light .bg-white\/\[0\.03\] {
+  background-color: var(--bg-card) !important;
+}
+
+.light .text-white,
+.light .text-slate-200 {
+  color: var(--text-primary) !important;
+}
+
+.light .text-slate-100,
+.light .text-slate-300 {
+  color: var(--text-primary) !important;
+}
+
+.light .text-slate-400,
+.light .text-slate-500 {
+  color: var(--text-secondary) !important;
+}
+
+.light .placeholder-slate-500::placeholder {
+  color: var(--text-muted);
+}
+
+.light button:hover {
+  border-color: var(--signal-color) !important;
+}
+
+.light .text-signal-500 {
+  color: var(--signal-color) !important;
+}
+
+.light .border-signal-500\/60,
+.light .bg-signal-500\/10 {
+  border-color: var(--signal-color) !important;
+  background-color: var(--signal-bg) !important;
+}
+
+.light ::selection {
+  color: #ffffff;
+  background: var(--signal-color);
 }

@@ -30,6 +30,10 @@ export function chartUrlPeriod(date, period) {
   return `${DATA_ROOT}/${date}/chart-${period}.png`;
 }
 
+export function chartUrlCustom(date, filename) {
+  return `${DATA_ROOT}/${date}/${filename}`;
+}
+
 export async function fetchOverview() {
   const response = await fetch(`${DATA_ROOT}/overview.json`, { cache: 'no-cache' });
   if (!response.ok) {

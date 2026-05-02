@@ -10,6 +10,7 @@ import {
   FileText,
   Gauge,
   Globe2,
+  Info,
   Moon,
   Newspaper,
   RadioTower,
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { chartUrl, chartUrlPeriod, fetchBrief, fetchIndex, 
+import { chartUrl, chartUrlCustom, chartUrlPeriod, fetchBrief, fetchIndex, 
   fetchOverview,
   formatDate } from './lib/data.js';
 
@@ -236,6 +237,7 @@ function HomeRedirect() {
 function BriefPage() {
   const { date } = useParams();
   const [chartPeriod, setChartPeriod] = useState('week');
+  const [chartType, setChartType] = useState('all');
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
 
   useEffect(() => {
@@ -265,6 +267,14 @@ function BriefPage() {
     { key: 'week', label: 'Неделя' },
     { key: 'month', label: 'Месяц' },
     { key: 'year', label: 'Год' },
+  ];
+
+  const chartTypes = [
+    { key: 'all', label: 'Все' },
+    { key: 'usd_rub', label: 'USD/RUB' },
+    { key: 'eur_rub', label: 'EUR/RUB' },
+    { key: 'brent', label: 'Brent' },
+    { key: 'rate', label: 'Ставка ЦБ' },
   ];
 
   return (
@@ -315,7 +325,12 @@ function BriefPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[30rem] lg:grid-cols-2">
             {brief.metrics.map((metric) => (
               <div key={metric.label} className="border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{metric.label}</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{metric.label}</p>
+                  <span title={metric.description || `Текущее значение ${metric.label}`}>
+                    <Info className="h-3 w-3 text-slate-500" />
+                  </span>
+                </div>
                 <p className="mt-2 text-2xl font-semibold text-white">{metric.value}</p>
               </div>
             ))}
@@ -423,8 +438,27 @@ function BriefPage() {
                 </button>
               ))}
             </div>
+            <div className="mb-3 flex flex-wrap gap-1">
+              {chartTypes.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setChartType(t.key)}
+                  className={`border px-2 py-1.5 text-xs font-medium uppercase tracking-[0.1em] transition ${
+                    chartType === t.key
+                      ? 'border-signal-500/60 bg-signal-500/10 text-signal-500'
+                      : 'border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <img
-              src={chartUrlPeriod(brief.date, chartPeriod)}
+              src={
+                brief.charts?.[chartPeriod]?.[chartType]
+                  ? chartUrlCustom(brief.date, brief.charts[chartPeriod][chartType])
+                  : chartUrlPeriod(brief.date, chartPeriod)
+              }
               alt={`График риска — ${periods.find((p) => p.key === chartPeriod)?.label} за ${formatDate(brief.date)}`}
               className="w-full border border-white/10 bg-coal-950"
             />
@@ -511,7 +545,6 @@ function Panel({ title, icon: Icon, children }) {
   );
 }
 
-
 function OverviewPage() {
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
 
@@ -564,12 +597,97 @@ function OverviewPage() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((item) => (
-          <a
+          <div
             key={item.id}
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
-            className="group block border border-white/10 bg-coal-850/78 p-4 transition hover:border-signal-500/50 hover:bg-coal-800"
+            onClick={() => window.open(item.url, '_blank')}
+            className="group block border border-white/10 bg-coal-850/78 p-4 transition hover:border-signal-500/50 hover:bg-coal-800 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/category/${encodeURIComponent(item.category)}`}
+                onClick={(e) => e.stopPropagation()}
+                className="border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-400 transition hover:border-signal-500/50 hover:text-signal-500"
+              >
+                {item.category}
+              </Link>
+              <span className="text-xs text-slate-500">{item.time}</span>
+            </div>
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-3 block text-sm font-semibold text-white group-hover:text-signal-500"
+            >
+              {item.title}
+            </a>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-slate-400">{item.source}</span>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-4 w-4 text-slate-500 transition group-hover:text-signal-500" aria-hidden="true" />
+              </a>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {item.tags.map((tag) => (
+                <span key={tag} className="text-[10px] uppercase tracking-[0.1em] text-slate-500">#{tag}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function CategoryPage() {
+  const { category } = useParams();
+  const decodedCategory = decodeURIComponent(category);
+  const [state, setState] = useState({ status: 'loading', data: null, error: null });
+
+  useEffect(() => {
+    let alive = true;
+    fetchOverview()
+      .then((data) => {
+        if (alive) setState({ status: 'ready', data, error: null });
+      })
+      .catch((error) => {
+        if (alive) setState({ status: 'error', data: null, error });
+      });
+    return () => { alive = false; };
+  }, []);
+
+  if (statusIsLoading(state)) return <LoadingState />;
+  if (state.status === 'error') return <ErrorState message={state.error.message} />;
+
+  const filtered = state.data.filter((item) => item.category === decodedCategory);
+
+  return (
+    <div className="space-y-6">
+      <section className="border border-white/10 bg-coal-900/88 p-5 shadow-panel sm:p-7">
+        <h2 className="text-2xl font-semibold text-white">{decodedCategory}</h2>
+        <p className="mt-2 text-sm text-slate-400">
+          Найдено: {filtered.length} новостей
+        </p>
+        <Link
+          to="/overview"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Назад к обзору
+        </Link>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => window.open(item.url, '_blank')}
+            className="group block border border-white/10 bg-coal-850/78 p-4 transition hover:border-signal-500/50 hover:bg-coal-800 cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <span className="border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-400">
@@ -577,17 +695,32 @@ function OverviewPage() {
               </span>
               <span className="text-xs text-slate-500">{item.time}</span>
             </div>
-            <h3 className="mt-3 text-sm font-semibold text-white group-hover:text-signal-500">{item.title}</h3>
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-3 block text-sm font-semibold text-white group-hover:text-signal-500"
+            >
+              {item.title}
+            </a>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-xs text-slate-400">{item.source}</span>
-              <ExternalLink className="h-4 w-4 text-slate-500 transition group-hover:text-signal-500" aria-hidden="true" />
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-4 w-4 text-slate-500 transition group-hover:text-signal-500" aria-hidden="true" />
+              </a>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {item.tags.map((tag) => (
                 <span key={tag} className="text-[10px] uppercase tracking-[0.1em] text-slate-500">#{tag}</span>
               ))}
             </div>
-          </a>
+          </div>
         ))}
       </section>
     </div>
@@ -619,6 +752,7 @@ export default function App() {
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/latest" element={<LatestRedirect />} />
         <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/category/:category" element={<CategoryPage />} />
         <Route path="/:date" element={<BriefPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
